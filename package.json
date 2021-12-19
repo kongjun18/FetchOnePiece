@@ -1,0 +1,15 @@
+{
+  "name": "fetchonepiece",
+  "version": "1.0.0",
+  "description": "Download ONE PIECE from www.dashuhuwai.com",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kong Jun",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "puppeteer": "^13.0.0"
+  }
+}
