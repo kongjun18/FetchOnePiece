@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const axios = require('axios');
-// const puppeteer = require('puppeteer-core');
 const puppeteer = require('puppeteer');
 
 // ONE PIECE 第一话从 1081 开始，共 1034 话。
@@ -25,26 +24,26 @@ const DOWNLOADER = axios.create({httpsAgent: new https.Agent({ keepAlive: true }
   page.setDefaultNavigationTimeout(0);
   // 抓取漫画的主循环
   for (let i = 0; i < CHARPERS; ++i) {
-    await page.goto(`https://www.dashuhuwai.com/comic/hanghaiwang/read-${FIRST_CHARPER + i}.html`);
-    await page.waitForSelector('#pic-list > .img_info', {timeout: 0}); // 禁止超时
-    let picList = await page.$('#pic-list');
-    const totalPages = Number(await picList.$eval(':scope .img_info', node => node.innerHTML.match(/.*\([1-9]+\/(?<pages>[0-9]+)\)/).groups['pages']));
-    console.log(`ONE PIECE chapter ${i + 1} has ${totalPages} pages.`);
+    let imageUrls; // do while 中定义
+    do {
+      await page.goto(`https://www.dashuhuwai.com/comic/hanghaiwang/read-${FIRST_CHARPER + i}.html`);
+      await page.waitForSelector('#pic-list > .img_info', {timeout: 0}); // 禁止超时
+      let picList = await page.$('#pic-list');
+      const totalPages = Number(await picList.$eval(':scope .img_info', node => node.innerHTML.match(/.*\([1-9]+\/(?<pages>[0-9]+)\)/).groups['pages']));
+      console.log(`ONE PIECE chapter ${i + 1} has ${totalPages} pages.`);
 
-    // 滚动到底，加载全部漫画图片
-    await autoScroll(page, totalPages);
+      // 滚动到底，加载全部漫画图片
+      await autoScroll(page, totalPages);
 
-    // 将图片列表转换为 url 数组
-    const imageUrls = await picList.$$eval(':scope img', elems => elems.map(elem => elem.getAttribute('src')));
+      // 将图片列表转换为 url 数组
+      imageUrls = await picList.$$eval(':scope img', elems => elems.map(elem => elem.getAttribute('src')));
+      // 不知道为什么，有时候会出现最后一个元素是 undefined 的情况。
+      // 若出现这种情况，则重新加载。
+    } while (imageUrls.some(value => value === undefined || value === 'undefined'));
 
-    // 不知道为什么，有时候会出现最后一个元素是 undefined 的情况。
-    if (!imageUrls[imageUrls.length - 1]) {
-      imageUrls.pop();
-    }
 
     // 下载漫画图片到 COMMIC_DIR
     const dir = ensureDirExists(path.join(COMMIC_DIR, String(i + 1)));
-    console.log(imageUrls.length);
     for (let page = 0; page < imageUrls.length; ++page) {
       const url = imageUrls[page];
       downloadComicImage(
@@ -105,7 +104,7 @@ async function downloadComicImage(dir, file, url) {
       response.data.pipe(fs.createWriteStream(f));
       console.log(`Download ${url} to ${f}`);
     })
-    .catch(_ => fs.appendFileSync(FAILED_URLS_FILE, url));
+    .catch(() => fs.appendFileSync(FAILED_URLS_FILE, url));
 }
 
 
@@ -116,8 +115,8 @@ async function downloadComicImage(dir, file, url) {
  * @returns {String} 图片拓展名：.png 或 .jpg
  */
 function getExtname(url) {
-  console.log(url);
-  return '.' + url.match(/.*(?<extname>(?:png)|(?:jpg))/).groups['extname'];
+  const matched = url.match(/.*(?<extname>(?:png)|(?:jpg))/);
+  return '.' + matched.groups['extname'];
 }
 
 /**
