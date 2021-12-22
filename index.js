@@ -6,7 +6,7 @@ const puppeteer = require('puppeteer');
 
 // ONE PIECE 第一话从 1081 开始，共 1034 话。
 const CHROME_BIN = '/usr/bin/chromium'; // Linux 使用 chromium
-const COMMIC_DIR = 'images'; // 漫画存放路径
+const COMMIC_DIR = 'ONEPIECE'; // 漫画存放路径
 const FAILED_URLS_FILE = 'failed-urls.txt'; // 下载失败的 url 存放路径
 const FIRST_CHARPER = 1081; // 网站中第一话编号
 const CHARPERS = 1034; // ONE PIECE 总话数
